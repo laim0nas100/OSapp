@@ -4,7 +4,6 @@ import static kernel.process.PIC.*;
 import kernel.process.UserProcess;
 import kernel.process.Process.State;
 import kernel.process.sysprocess.Scheduler;
-import kernel.process.sysprocess.Scheduler.ProcStart;
 import static kernel.stackvm.Bytecode. *;
 
 public class Test {
@@ -17,7 +16,7 @@ public class Test {
 
 	static Integer[] loop = {
 	// .GLOBALS 2; N, I
-	// N = 10						ADDRESS
+	// N = 10	2					ADDRESS
 			ICONST, 5,				// 0
 			GSTORE, 0,				// 2
 	// I = 0
@@ -28,14 +27,14 @@ public class Test {
 			GLOAD, 1,				// 8
 			GLOAD, 0,				// 10
 			ILT,					// 12
-			BRF, 26,				// 13
+			BRF, 27,				// 13
 	//     I = I + 1
 			GLOAD, 1,				// 15
 			ICONST, 1,				// 17
 			IADD,					// 19
 			GSTORE, 1,				// 20
                         INT, WRITE,
-			BR, 8,					// 22
+			BR, 9,					// 22
 	// DONE (24):
 	// PRINT "LOOPED "+N+" TIMES."
                         INT, 1,
@@ -45,7 +44,7 @@ public class Test {
 
 	public static void main(String[] args) throws Kernel.KernelExe {
             Kernel kernel = new Kernel();
-            Scheduler.startNewProcess(new ProcStart(loop,2));
+            Scheduler.startNewProcess(loop);
 //            UserProcess pro = new UserProcess(loop,2,0);
 //            UserProcess pro2 = new UserProcess(loop,2,1);
 

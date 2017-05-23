@@ -4,8 +4,8 @@ public class Bytecode {
         
     
     public static class Instruction {
-        String name; // E.g., "iadd", "call"
-        int n = 0;
+        public final String name; // E.g., "iadd", "call"
+        public int n = 0;
         public Instruction(String name) {
             this(name,0); 
         }
@@ -52,7 +52,7 @@ public class Bytecode {
         null,
         null,
         
-        new Instruction("int"),
+        new Instruction("int", 1),
         null,
         null,
         null,

@@ -32,7 +32,7 @@ public class Kernel {
             usableSpace[i] = new MemFrame();
         }
         for(int i = 0; i < USER_PROC_LIMIT; i++){
-            UserProcess p = new UserProcess(new Integer[]{},0,i);
+            UserProcess p = new UserProcess(new Integer[]{},i);
             userProcList[i] = p;
             p.state = State.UNUSED;
         }

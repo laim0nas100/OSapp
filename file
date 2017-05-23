@@ -1,0 +1,9 @@
+2
+nop
+nop
+label ok
+nop
+int 2
+int 12
+int 33
+br ok

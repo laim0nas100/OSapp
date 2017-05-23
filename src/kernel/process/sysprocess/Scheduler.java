@@ -15,20 +15,13 @@ import kernel.process.Process.State;
  * @author lemmin
  */
 public class Scheduler {
-    public static class ProcStart{
-        Integer[] code;
-        int nglobals;
-        public ProcStart(Integer[] code, int nglobals){
-            this.code = code;
-            this.nglobals = nglobals;
-        }
-    }
-    public static ArrayDeque<ProcStart> waitList = new ArrayDeque<>();
+        
+    public static ArrayDeque<Integer[]> waitList = new ArrayDeque<>();
     public static UserProcess[] procList = Kernel.userProcList;
-    public static boolean startNewProcess(ProcStart st){
+    public static boolean startNewProcess(Integer[] st){
         for(int i = 0; i<procList.length; i++){
             if(procList[i].state == State.UNUSED){//found empty process slot
-                UserProcess proc = new UserProcess(st.code,st.nglobals,i);
+                UserProcess proc = new UserProcess(st,i);
                 Kernel.userProcList[i] = proc;
                 proc.state = State.READY;
                 return true;

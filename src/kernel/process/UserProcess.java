@@ -22,7 +22,7 @@ public class UserProcess extends Process{
     public AbstractVM vm;
     public int plr;
     public int codeSpaceSize;
-    public UserProcess(Integer[] code, int nglobals, int id){
+    public UserProcess(Integer[] code, int id){
         codeSpaceSize = code.length;
         pid = id;
         plr = pid;
@@ -59,8 +59,8 @@ public class UserProcess extends Process{
             }
         };
         
-        vm.sp.inc(nglobals);
-        for(int i=0; i<code.length; i++){
+        vm.sp.inc(code[0]);
+        for(int i=1; i<code.length; i++){
             int pa = Paging.va2pa(i, plr);
 //            System.out.println("Resolved pa "+pa);
             Paging.setMemory(pa,code[i]);
