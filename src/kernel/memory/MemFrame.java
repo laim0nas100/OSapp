@@ -6,7 +6,8 @@
 package kernel.memory;
 
 import java.util.Arrays;
-import kernel.Func;
+import misc.Func;
+import static kernel.Defs.*;
 
 /**
  *
@@ -14,9 +15,10 @@ import kernel.Func;
  */
 public class MemFrame {
     public Integer[] mem;
+    public boolean used;
     public MemFrame(){
-        mem = new Integer[Paging.PAGE_SIZE];
-        Func.fillZero(mem);
+        mem = new Integer[PAGE_SIZE];
+        Func.fill(mem,-1);
     }
     public String toString(){
         return Arrays.toString(mem);

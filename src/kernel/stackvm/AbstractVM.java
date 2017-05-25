@@ -7,7 +7,9 @@ package kernel.stackvm;
 
 import java.util.ArrayList;
 import java.util.List;
-import kernel.CPU.Reg;
+import static kernel.Defs.trace;
+import kernel.Kernel.KernelExe;
+import kernel.Reg;
 import kernel.process.Interruptable;
 import kernel.process.PagedMemoryAccess;
 
@@ -15,7 +17,7 @@ import kernel.process.PagedMemoryAccess;
  *
  * @author lemmin
  */
-public abstract class AbstractVM implements PagedMemoryAccess,Interruptable{
+public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
 	public static final int FALSE = 0;
 	public static final int TRUE = 1;
        
@@ -23,11 +25,9 @@ public abstract class AbstractVM implements PagedMemoryAccess,Interruptable{
 	public Reg ip = new Reg(0);       // instruction pointer register
 	public Reg sp = new Reg(-1);  		// stack pointer register
 
-	public boolean trace;
-
 
 	/** Simulate the fetch-decode execute cycle */
-	public void step() {
+	public void step() throws KernelExe {
             int opcode = codeAccess(ip.val);
             int a,b,addr;
             if (trace){
@@ -95,7 +95,10 @@ public abstract class AbstractVM implements PagedMemoryAccess,Interruptable{
                     sp.dec();
                     break;
                 default:
-                        throw new Error("invalid opcode: "+opcode+" at ip="+(ip.val-1));
+                    if(trace)
+                        System.out.println("invalid opcode: "+opcode+" at ip="+(ip.val-1));
+                    throw new KernelExe("Invalid opcode");
+                    
             }
             if ( trace ){
                 System.err.printf("%-22s \n", stackString());

@@ -3,16 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package kernel.resource;
+package kernel.process.sysprocess;
 
 import java.util.ArrayList;
+import kernel.resource.Job;
 
 /**
  *
  * @author lemmin
+ * Simulates system process, i.e. handles jobs and does it's routine
  */
-public class Resourses {
-    public static FD[] files = new FD[]{
-        new FD(1)
-    };
+public interface Handler{
+    public final ArrayList<Job> jobs = new ArrayList<>();
 }

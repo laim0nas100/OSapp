@@ -3,18 +3,19 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package kernel.process;
+package kernel.process.sysprocess;
+
+import kernel.process.Proc;
 
 /**
  *
  * @author lemmin
  */
-public class ProcStart {
-    public Integer[] code;
-    public int nglobals;
-    public ProcStart(Integer[] code, int nglobals){
-        this.code = code;
-        this.nglobals = nglobals;
+public class MemoryHandler extends Proc implements Handler{
+
+    @Override
+    public int stepLogic() {
+        return 2;
     }
     
 }

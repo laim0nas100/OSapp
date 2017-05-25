@@ -8,38 +8,36 @@ package kernel;
 import java.util.Arrays;
 import kernel.memory.Paging;
 import kernel.memory.MemFrame;
-import kernel.process.Process.State;
 import kernel.process.UserProcess;
-import kernel.stackvm.VM;
-
+import static kernel.Defs.*;
 /**
  *
  * @author Lemmin
  */
 public class Kernel {
-    public static final int USER_PROC_LIMIT = 10;
     public static UserProcess[] userProcList = new UserProcess[USER_PROC_LIMIT];
-    public static MemFrame[] usableSpace = new MemFrame[100];
+    public static MemFrame[] ram = new MemFrame[USER_FRAMES];
     public static CPU cpu = new CPU();
+    
+    
     public static class KernelExe extends Exception{
         public KernelExe(String s){
             super(s);
         }
     }
     public Paging paging = new Paging();
-    public Kernel(){
-        for(int i = 0; i < usableSpace.length; i++){
-            usableSpace[i] = new MemFrame();
+    public static void init(){
+        for(int i = 0; i < ram.length; i++){
+            ram[i] = new MemFrame();
         }
-        for(int i = 0; i < USER_PROC_LIMIT; i++){
-            UserProcess p = new UserProcess(new Integer[]{},i);
-            userProcList[i] = p;
-            p.state = State.UNUSED;
+
+        for(int i = 0; i < userProcList.length; i++){
+            userProcList[i] = new UserProcess(i);
         }
     }
     public static void dumpMemory(){
-        int i = 0;
-        for(MemFrame frame:usableSpace){
+//        int i = 0;
+        for(MemFrame frame:ram){
             System.out.println(Arrays.asList(frame.mem));
         }
     }

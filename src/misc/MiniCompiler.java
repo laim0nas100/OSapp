@@ -22,6 +22,8 @@ import kernel.stackvm.Bytecode.Instruction;
  * @author lemmin
  */
 public class MiniCompiler {
+    private static boolean print = false;
+  
     public static Instruction[] instructions = Bytecode.instructions;
     
     public static HashMap<String,Integer> instrMap = new HashMap<>();
@@ -30,7 +32,7 @@ public class MiniCompiler {
     public static Integer[] compile(String filePath) throws FileNotFoundException, IOException, Lexer.NoSuchLexemeException, Lexer.StringNotTerminatedException{
         ArrayList<Integer> code = new ArrayList<>();
         
-        ArrayList<String> readFromFile = new ArrayList<>(FileReader.readFromFile(filePath));
+        ArrayList<String> readFromFile = new ArrayList<>(FileReader.readFromFile(filePath,"#"));
         Lexer lex = new Lexer(readFromFile);
         int j = 0;
         
@@ -46,10 +48,11 @@ public class MiniCompiler {
         lex.skipWhitespace = true;
         
         ArrayList<Token> tokens = new ArrayList<>(lex.getRemainingTokens());
-        for(Token t:tokens){
-            System.out.println(t);
+        if(print){
+            for(Token t:tokens){
+                System.out.println(t);
+            }
         }
- 
         
         HashSet<String> jumps = new HashSet<>();
         jumps.add(instructions[Bytecode.BR].name);
@@ -77,14 +80,18 @@ public class MiniCompiler {
                 i++;//skip instruction
             }else{
                 code.add(instrMap.get(id));
+                Integer narg = instrArg.get(id);
+                if(narg == null){
+                    continue;
+                }
                 if(jumps.contains(id)){//jump
                     i++;
                     Literal label = (Literal) tokens.get(i);
                     code.add(jumpMap.get(label.value));
-                }else if(instrArg.get(id)!=null && instrArg.get(id)>0){                    
-                    int narg = instrArg.get(id);
+                }else if(narg > 0){                    
+                    //variable argument amount
                     int size = i;
-                    while(i<size+narg){
+                    while(i < size + narg){
                         i++;
                         Token get = tokens.get(i);
                         Literal val = (Literal) get;
@@ -98,12 +105,12 @@ public class MiniCompiler {
         if(errorIndex>0){
             System.out.println("Code contains errors at "+errorIndex);
         }
-        for(Integer i:code){
-            System.out.println(i);
+        if(print){
+            j = 0;
+            for(Integer i:code){
+                System.out.printf("%02d: %02d\n",j++,i);
+            }
         }
-        
-        
-        
         
         Integer[] cod = code.toArray(new Integer[code.size()]);
         return cod;

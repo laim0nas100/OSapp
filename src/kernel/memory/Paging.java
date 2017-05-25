@@ -5,14 +5,10 @@
  */
 package kernel.memory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import kernel.Func;
 import kernel.Kernel;
-import kernel.Kernel.KernelExe;
+import static kernel.Defs.*;
+import misc.Func;
 import kernel.process.UserProcess;
-
 /**
  *
  * @author Lemmin
@@ -35,23 +31,26 @@ public class Paging {
     // 0000 0000 0011 1111 1111 0000 0000 0000
     // ppn
     // 1111 1111 1111 1111 1111 0000 0000 0000
-    private static final int DIR_MASK = 0xffa00000;
-    private static final int TABLE_MASK = 0x003ff000;
-    private static final int PPN_MASK = 0xfffff000;
+    
+//    private static final int DIR_MASK = 0xffa00000;
+//    private static final int TABLE_MASK = 0x003ff000;
+//    private static final int PPN_MASK = 0xfffff000;
     
     
-    public static final int PAGE_SIZE = 50;
-    public static final int FIRST_USER_ADDRESS = PAGE_SIZE * Kernel.USER_PROC_LIMIT;
-    
+    // virtual address to physical address with page table address
     public static int va2pa(int va, int ptr){
-        MemFrame frame = Kernel.usableSpace[ptr];
-        int pa = frame.mem[va];
+        MemFrame pagingTable = Kernel.ram[ptr];
+        int frameIndex = va / PAGE_SIZE;
+        int offset = va % PAGE_SIZE;
+        int tableIndex = pagingTable.mem[frameIndex];
+        int pa = offset + tableIndex * PAGE_SIZE;
         return pa;
     }
+    
     public static int readMemory(int pa){
 //        System.err.println("PA" + pa);
         int frameAddress = pa / PAGE_SIZE;
-        MemFrame frame = Kernel.usableSpace[frameAddress];
+        MemFrame frame = Kernel.ram[frameAddress];
         int newpa = pa % PAGE_SIZE;
 //        System.err.println("Addr "+frameAddress +" newPA "+newpa);
 //        System.err.println(Arrays.toString(frame.mem));
@@ -60,26 +59,75 @@ public class Paging {
     
     public static void setMemory(int pa, int val){
         int frameAddress = pa / PAGE_SIZE;
-        MemFrame frame = Kernel.usableSpace[frameAddress];
-        pa = pa % PAGE_SIZE;
-        frame.mem[pa] = val;
+        MemFrame frame = Kernel.ram[frameAddress];
+        int offset = pa % PAGE_SIZE;
+        frame.mem[offset] = val;
     }
-    //adress to page table
-    public static int setupPageTable(int order){
-        
-        MemFrame frame = Kernel.usableSpace[order];
-        for(int i = 0; i < PAGE_SIZE; i++){
-            frame.mem[i] = FIRST_USER_ADDRESS + PAGE_SIZE * order + i;
-        }
-        return order * PAGE_SIZE;
-    }
-    
     
     public static int getBitValue(int val,int index){
         int bit = 1;
-        for(int i =0; i< index; i++){
+        for(int i = 0; i< index; i++){
             bit = bit << 1;
         }
         return val & bit;
     }
+    
+    public static int firstFreeFrameIndex(){
+        for(int i = 0; i < Kernel.ram.length; i++){
+            if(!Kernel.ram[i].used){
+                return i;
+            }
+        }
+        return -1;
+    }  
+    
+    public static int countUsedPagesFromPageTable(MemFrame pageTable){
+        int pagesUsed = 0;
+        for(int i = 0; i < PAGE_SIZE; i++){
+            int index = pageTable.mem[i];
+            if(index > 0){ // page is indexed so it's in use
+                pagesUsed++;
+            }
+        }
+        return pagesUsed;
+    }
+    
+    public static void markFreeFromPageTable(MemFrame pageTable){
+        int usedPages = countUsedPagesFromPageTable(pageTable);
+        for(int i = 0; i < usedPages; i++){
+            int index = pageTable.mem[i];
+            markFreeFrameIndex(index);
+        }
+    }
+    
+    public static void markFreeFrameIndex(int index){
+        Kernel.ram[index].used = false;
+        Func.fill(Kernel.ram[index].mem, -1);
+    }
+    
+    public static void markUsedFrameIndex(int index){
+        Kernel.ram[index].used = true;
+        Func.fill(Kernel.ram[index].mem, 0);
+    }
+    
+    public static int countFreeFrames(){
+        int count = 0;
+        for(int i = 0; i < Kernel.ram.length; i++){
+            if(!Kernel.ram[i].used){
+                count++;
+            }
+        }
+        return count;
+    }
+    
+    // asumes page is available
+    public static void allocatePage(int pid){
+        UserProcess proc = Kernel.userProcList[pid];
+        MemFrame table = Kernel.ram[proc.plr];
+        int tableSize = countUsedPagesFromPageTable(table);
+        int freeFrameIndex = firstFreeFrameIndex();
+        table.mem[tableSize] = freeFrameIndex;
+        markUsedFrameIndex(freeFrameIndex);
+    }
+
 }

@@ -1,16 +1,10 @@
-package kernel.stackvm;
+package misc;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import kernel.CPU.Reg;
-import kernel.Kernel;
-import kernel.memory.Paging;
-import kernel.process.PagedMemoryAccess;
+import kernel.Reg;
+import kernel.stackvm.AbstractVM;
 
 /** A simple stack-based interpreter */
-public class VM extends AbstractVM{
+public class StandaloneVM extends AbstractVM{
 
         
     // memory
@@ -19,20 +13,14 @@ public class VM extends AbstractVM{
     public Reg tp = new Reg(0);
     public Reg codeEnd = new Reg(0);
     public Reg p;
-    /** Metadata about the functions allows us to refer to functions by
-     * 	their index in this table. It makes code generation easier for
-     * 	the bytecode compiler because it doesn't have to resolve
-     *  addresses for forward references. It can generate simply
-     *  "CALL i" where i is the index of the function. Later, the
-     *  compiler can store the function address in the metadata table
-     *  when the code is generated for that function.
-     */
 
-    public VM(Integer[] code, int nglobals) {
+
+    public StandaloneVM(Integer[] code) {
         stack = new Integer[100];
+        sp.inc(code[0]);//globals
         for(int i=0; i<stack.length; i++){
             if(i<code.length){
-                stack[i] = code[i];
+                stack[i] = code[i+1];
             }
             else{
                 stack[i] = 0;
@@ -48,7 +36,7 @@ public class VM extends AbstractVM{
         System.err.println(in);
         System.err.println(n);
         codeEnd.val = code.length;
-        sp.inc(nglobals);
+        
         System.err.println(sp.val +" "+codeEnd.val +" "+ ip.val);
 
     }
