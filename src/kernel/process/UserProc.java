@@ -14,19 +14,20 @@ import kernel.Kernel;
 import kernel.memory.MemFrame;
 import kernel.memory.Paging;
 import static kernel.PIC.*;
+import kernel.Reg;
 import kernel.stackvm.AbstractVM;
 
 /**
  *
  * @author lemmin
  */
-public class UserProcess extends Proc {
+public class UserProc extends Proc {
     
     public AbstractVM vm;
-    public int plr = -1;
+    public Reg plr = new Reg(-1);
     public int codeSpaceSize = 0;
-    public UserProcess(int id){
-        this.pid = id;
+    public UserProc(int id){
+        super(id);
         vm = new AbstractVM(){
             @Override
             public void INT(int interrupt){
@@ -36,7 +37,7 @@ public class UserProcess extends Proc {
             @Override
             public int codeAccess(int va){
                 va = offsetRangeCheck(va);
-                int pa = Paging.va2pa(va, plr);
+                int pa = Paging.va2pa(va, plr.get());
                 if(traceMemoryMapping)
                     System.err.println(va +" -> "+pa);
                 return Paging.readMemory(pa);
@@ -46,7 +47,7 @@ public class UserProcess extends Proc {
             public int userMemoryAccess(int va){
                 int offset = va + codeSpaceSize;
                 offset = offsetRangeCheck(offset);
-                int pa = Paging.va2pa(offset, plr);
+                int pa = Paging.va2pa(offset, plr.get());
                 if(traceMemoryMapping)
                     System.err.println(va +" + "+ codeSpaceSize+" -> "+pa);
 
@@ -57,12 +58,8 @@ public class UserProcess extends Proc {
             public void userMemorySet(int va, int val){
                 int offset = va + codeSpaceSize;
                 offset = offsetRangeCheck(offset);
-                int pa = Paging.va2pa(offset, plr);
+                int pa = Paging.va2pa(offset, plr.get());
                 Paging.setMemory(pa,val);
-                if(PIC.cleanupInvoked){
-                    PIC.cleanupInvoked = false;
-                    ProcessAPI.cleanupProcess(pid);
-                }
             }
 
             @Override
@@ -73,15 +70,18 @@ public class UserProcess extends Proc {
         
         
     }
-    
+    /**
+        
+        Set variables and set state to READY
+    */
     public void initialize(Integer[] code, int pageIndex){
-        this.plr = pageIndex;
+        this.plr.set(pageIndex);
         vm.sp.set(code[0]); //acount for global variables
         vm.ip.set(0);
         codeSpaceSize = code.length;
         state = State.READY;
         for(int i = 0;  i< codeSpaceSize; i++){
-            int pa = Paging.va2pa(i, plr);
+            int pa = Paging.va2pa(i, plr.get());
             Paging.setMemory(pa,code[i]);
         }  
     }
@@ -97,7 +97,7 @@ public class UserProcess extends Proc {
     }
     
     public int pagesInUse(){
-        MemFrame table = Kernel.ram[this.plr];
+        MemFrame table = Kernel.ram[this.plr.get()];
         return Paging.countUsedPagesFromPageTable(table);
     }
     public int offsetRangeCheck(int offset){
@@ -105,12 +105,26 @@ public class UserProcess extends Proc {
             PIC.trap(pid, PIC.INVALID_ADRESS);
             return 0;
         }
-        if((double)(offset + PAGE_SIZE)/PAGE_SIZE >= pagesInUse()){
+        if((double)(offset + PAGE_SIZE) / PAGE_SIZE >= pagesInUse()){
             System.out.println("Need more memory");
             PIC.trap(pid, PAGE_FAULT);
 
         }
         return offset;
+    }
+
+    @Override
+    public void bindCPU() {
+        Kernel.cpu.ip.bindBidirectional(vm.ip);
+        Kernel.cpu.sp.bindBidirectional(vm.sp);
+        Kernel.cpu.plr.bindBidirectional(this.plr);
+    }
+
+    @Override
+    public void unbindCPU() {
+        Kernel.cpu.ip.unbindBidirectional(vm.ip);
+        Kernel.cpu.sp.unbindBidirectional(vm.sp);
+        Kernel.cpu.plr.unbindBidirectional(this.plr);
     }
     
 }

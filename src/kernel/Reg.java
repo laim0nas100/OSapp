@@ -5,33 +5,32 @@
  */
 package kernel;
 
+import javafx.beans.property.SimpleIntegerProperty;
+
 /**
  *
  * @author lemmin
  */
-public class Reg {
-    public int val;
-    public void set(int i){
-        this.val = i;
-    }
+public class Reg extends SimpleIntegerProperty {
+ 
 
 
     public int incBefore(int i){
-        val += i;
-        return val;
+        this.add(i);
+        return get();
     }
     public int decBefore(int i){
-        val -= i;
-        return val;
+        this.set(get() - i);
+        return get();
     }
     public int inc(int i){
-        int save = val;
-        val += i;
+        int save = get();
+        this.add(i);
         return save;
     }
     public int dec(int i){
-        int save = val;
-        val -= i;
+        int save = get();
+        this.set(save - i);
         return save;
     }
     public int dec(){
@@ -41,7 +40,7 @@ public class Reg {
         return inc(1);
     }
     public Reg(int v){
-        val = v;
+        super(v);
     }
     public Reg(){
         this(0);

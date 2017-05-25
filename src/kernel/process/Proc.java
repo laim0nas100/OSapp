@@ -6,7 +6,6 @@
 package kernel.process;
 
 import java.util.ArrayList;
-import kernel.CPU;
 import kernel.Defs.State;
 import kernel.Kernel;
 import kernel.PIC;
@@ -16,19 +15,28 @@ import kernel.PIC;
  * @author lemmin
  */
 public abstract class Proc {
-    public static CPU cpu = Kernel.cpu;
     public int pid;
-    public int priority;
     public State state = State.UNUSED;
     public ArrayList<Integer> usedFD = new ArrayList<>();
     public abstract int stepLogic();
+    public Proc(int pid){
+        this.pid = pid;
+    }
+    
+    //should only do this if State is running
     public final void step(){
         int timeTaken = stepLogic();
-        int timeLeft = cpu.t.dec(timeTaken);
+//        System.out.println("Time taken "+timeTaken);
+        //timer is always running
+        int timeLeft = Kernel.cpu.t.dec(timeTaken);
+//        System.out.println("Time left "+timeLeft);
         if(timeLeft <= 0){// invoke timer interrupt
-            if(cpu.it.val > 0){ // interrupts are not disabled
+            if(Kernel.cpu.it.get() > 0){ // interrupts are not disabled
                 PIC.trap(pid, PIC.TIMER);
             }
         }
     }
+    
+    public abstract void bindCPU();
+    public abstract void unbindCPU();
 }

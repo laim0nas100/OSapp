@@ -5,17 +5,12 @@
  */
 package kernel.process.sysprocess;
 
-import kernel.process.Proc;
 
-/**
- *
- * @author lemmin
- */
-public class MemoryHandler extends Proc implements Handler{
+public class MemoryHandler extends SysProc {
 
-    @Override
-    public int stepLogic() {
-        return 2;
+    public MemoryHandler(int pid, int jobDuration) {
+        super(pid);
+        this.singleJobDuration = jobDuration;
     }
     
 }

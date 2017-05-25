@@ -5,13 +5,16 @@
  */
 package kernel.resource;
 
+import static kernel.Defs.PID_IDLE;
+
 /**
  *
  * @author lemmin
  */
 public class Job{
     public boolean isDone = false;
-    public int invokedByPID;
+    public int invokedByPID = PID_IDLE; //idle process
+    public String description = "no desc"; 
     public Runnable run;
     public Job(int pid){
         this.invokedByPID = pid;

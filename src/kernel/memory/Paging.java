@@ -7,8 +7,9 @@ package kernel.memory;
 
 import kernel.Kernel;
 import static kernel.Defs.*;
+import kernel.process.ProcessAPI;
 import misc.Func;
-import kernel.process.UserProcess;
+import kernel.process.UserProc;
 /**
  *
  * @author Lemmin
@@ -122,8 +123,8 @@ public class Paging {
     
     // asumes page is available
     public static void allocatePage(int pid){
-        UserProcess proc = Kernel.userProcList[pid];
-        MemFrame table = Kernel.ram[proc.plr];
+        UserProc proc = ProcessAPI.userProc[pid];
+        MemFrame table = Kernel.ram[proc.plr.get()];
         int tableSize = countUsedPagesFromPageTable(table);
         int freeFrameIndex = firstFreeFrameIndex();
         table.mem[tableSize] = freeFrameIndex;

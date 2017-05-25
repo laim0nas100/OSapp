@@ -14,5 +14,6 @@ import kernel.resource.Job;
  * Simulates system process, i.e. handles jobs and does it's routine
  */
 public interface Handler{
-    public final ArrayList<Job> jobs = new ArrayList<>();
+    public void submitJob(Job job);
+    public void commitNextJob();
 }

@@ -5,14 +5,17 @@
  */
 package kernel.process;
 
+import LibraryLB.Parsing.Lexer;
+import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import kernel.Kernel;
-import kernel.Kernel;
-import kernel.process.UserProcess;
-import misc.MiniCompiler;
 import static kernel.Defs.*;
 import kernel.memory.MemFrame;
 import kernel.memory.Paging;
+import kernel.process.sysprocess.SysProc;
+import kernel.resource.Job;
+import misc.MiniCompiler;
 
 /**
  *
@@ -28,22 +31,21 @@ import kernel.memory.Paging;
  * 
  */
 public class ProcessAPI {
-        
-    public static ArrayDeque<Integer[]> enqueuedProcessesToLaunch = new ArrayDeque<>();
-    public static UserProcess[] procList = Kernel.userProcList;
-    
-    
-    
-    public static int currentPID = 0;
 
-    
+    public static UserProc[] userProc = new UserProc[USER_PROC_LIMIT];
+    public static Proc[] allProc = new Proc[USER_PROC_LIMIT + SYSTEM_PROC_LIMIT];
+    public static SysProc idleProcess;
+    public static SysProc fileSystemHandler;
+    public static SysProc memoryHandler;
+    public static SysProc processHandler;
 
-    
-    
+    private static int enqueuedProc = 0;
+
+  
     
     public static int firstFreePID(){
         for(int i = 0; i < USER_PROC_LIMIT; i++){
-            if(Kernel.userProcList[i].state == State.UNUSED){
+            if(userProc[i].state == State.UNUSED){
                 return i;
             }
         }
@@ -51,20 +53,19 @@ public class ProcessAPI {
     }
     
     
-//    public static UserProcess conditionalCreateProcess(Integer[] code){
-//        
-//    }
     
-    
-    // does not account for page table
+    /**
+     * does not account for page table
+     */
     public static int requiredFrames(Integer[] code){
-        int requiredMemory = requiredAllignWithPage(code.length) + code[0]; //code size + global variables
+        int requiredMemory = requiredAllignWithPage(code.length + code[0]); //code size + global variables
         return requiredMemory / PAGE_SIZE;
     }
     
-    //need to check all resources before this
-    public static UserProcess createProcess(Integer[] code) throws Exception{
-        // asume all resources is available   
+    /**
+     * assume all resources is available
+     */
+    public static UserProc createProcess(Integer[] code){
         
         int requiredFrames = requiredFrames(code);
         
@@ -79,22 +80,17 @@ public class ProcessAPI {
             pageTable.mem[i] = freePageIndex;
             Paging.markUsedFrameIndex(freePageIndex);
         }
-        
-        
-        UserProcess proc = procList[firstFreePID()];
+
+        UserProc proc = userProc[firstFreePID()];
         proc.initialize(code,plr);
-        // TODO:
-        proc.state = State.ACTIVE;
         return proc;
     }
     
-    public static void enqueueProcess(Integer[] code){
-        enqueuedProcessesToLaunch.add(code);
-    }
+    
     
     public static void cleanupProcess(int pid){
-        UserProcess proc = procList[pid];
-        int plr = proc.plr;
+        UserProc proc = userProc[pid];
+        int plr = proc.plr.get();
         MemFrame page = Kernel.ram[plr];
         Paging.markFreeFromPageTable(page);
         Paging.markFreeFrameIndex(plr);
@@ -103,8 +99,8 @@ public class ProcessAPI {
     
     
     
-    public static void resumeProcess(UserProcess proc){
-        proc.state = State.READY;
+    public static void setReady(int pid){
+        allProc[pid].state = State.READY;
     }
     
     
@@ -115,5 +111,47 @@ public class ProcessAPI {
             pages++;
         }
         return PAGE_SIZE * pages;
+    }
+    
+    
+    public static void addLoadProcessJob(String filePath){
+        Job job = new Job(PID_IDLE);
+        job.run = () -> {
+            try {
+                Integer[] code = MiniCompiler.compile(filePath);
+                enqueueProcess(code);
+            } catch (IOException e){
+                System.out.println("File path exception");
+            } catch (Lexer.NoSuchLexemeException | Lexer.StringNotTerminatedException ex) {
+                System.out.println("Compiler exception, check code");
+            }
+        };
+        job.description = "Enqueue process creation";
+        ProcessAPI.fileSystemHandler.submitJob(job);
+        
+    }
+    
+    public static void enqueueProcess(Integer[] code){
+        if(enqueuedProc < USER_PROC_LIMIT){
+            enqueuedProc++;
+            Job job = new Job(PID_IDLE);
+            job.run = () ->{
+                int requiredFrames = ProcessAPI.requiredFrames(code) + 1; // code size + paging table
+                int freeFrames = Paging.countFreeFrames();
+                if(freeFrames < requiredFrames){
+                    enqueueProcess(code); // try again later
+
+                }else{
+                    ProcessAPI.createProcess(code);
+                }
+                enqueuedProc--;
+
+            };
+            job.description = "Create process";
+            ProcessAPI.processHandler.submitJob(job);
+        }
+        
+        
+        
     }
 }

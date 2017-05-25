@@ -16,7 +16,15 @@ public class Defs {
     public enum State{UNUSED,READY,ACTIVE,BLOCKED,ZOMBIE};
     public static final int USER_FRAMES = 15;
     public static final int PAGE_SIZE = 64;
-    public static final int USER_PROC_LIMIT = 10;
+    
     public static final int TIME_FRAME = 8;
-
+    
+    public static final int USER_PROC_LIMIT = 10;
+    public static final int SYSTEM_PROC_LIMIT = 4;
+    public static final int ALL_PROC_LIMIT = USER_PROC_LIMIT + SYSTEM_PROC_LIMIT;
+    
+    public static final int PID_IDLE = USER_PROC_LIMIT;
+    public static final int PID_FS_HANDLER = USER_PROC_LIMIT + 1;
+    public static final int PID_PROC_HANDLER = USER_PROC_LIMIT + 2;
+    public static final int PID_MEMORY_HANDLER = USER_PROC_LIMIT + 3;
 }

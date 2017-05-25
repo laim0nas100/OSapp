@@ -5,18 +5,18 @@
  */
 package kernel;
 
-import kernel.Defs.State;
-import kernel.Kernel;
+import static kernel.Defs.*;
 import kernel.process.ProcessAPI;
 import kernel.memory.Paging;
 import kernel.process.Proc;
+import kernel.process.sysprocess.MainProcess;
 import kernel.resource.Job;
 
 /**
  *
  * @author lemmin
  * Programmable interrupt controller
- * Distributes "jobs" to specific handlers
+ * Distributes "jobs" (neat way to package message) to specific handlers
  */
 public class PIC {
     
@@ -34,49 +34,79 @@ public class PIC {
     public static final int READ            = SYSCALL + 2;
     
     
-    // TODO:
-    public static boolean cleanupInvoked = false;
+    public static CPU cpu = Kernel.cpu;
     
     public static void trap(int pid, int interrupt){
-//        System.err.println("PIC "+interrupt);
-        Job job = new Job(pid);
         
+        //Block current process
+        Proc proc = ProcessAPI.allProc[pid];
+        proc.state = State.BLOCKED;
         
-        Proc proc = Kernel.userProcList[pid];
         if(interrupt <= USER_ERROR){
             System.out.println("User error "+interrupt);
             trap(pid,HALT);
             return;
         }
+        Job job = new Job(pid);
         switch(interrupt){
             case PAGE_FAULT:
-                System.out.println("Allocate more memory!");
-                if(Paging.countFreeFrames()>0){
-                    Paging.allocatePage(pid);
-                    System.out.println("Here you go!");
-                }else{
-                    System.out.println("We are out of memory");
-                    trap(pid,HALT);
-                    cleanupInvoked = true;
-//                    ProcessAPI.cleanupProcess(pid);
-                    
-                }
+                job.run = () -> {
+                    System.out.println("Allocate more memory!");
+                    if(Paging.countFreeFrames() > 0){
+                        Paging.allocatePage(pid);
+                        System.out.println("Here you go!");
+                    }else{
+                        System.out.println("We are out of memory");
+                        trap(pid,PAGE_FAULT);//try again
+                    }
+                };
+                job.description = "Memory allocation";
+                ProcessAPI.memoryHandler.submitJob(job);
+                
+                
                 break;
             case HALT:
-                proc.state = State.ZOMBIE;
                 
+                job.run = () -> {
+                    proc.state = State.ZOMBIE;
+                    Job subJob = new Job(PID_IDLE);
+                    subJob.run = () -> {
+                        ProcessAPI.cleanupProcess(pid);
+                    };
+                    subJob.description = "Process cleanup";
+                    ProcessAPI.memoryHandler.submitJob(subJob);
+                };
+                job.description = "Process cleanup invoke";
+                ProcessAPI.processHandler.submitJob(job);               
                 break;
+                
             case WRITE:
-                
-                System.out.println("Write");
+                int sp = Kernel.cpu.sp.dec();
+                int pa = Paging.va2pa(sp, cpu.plr.get());
+                int val = Paging.readMemory(pa);
+//                System.out.println("Write");
+                job.run = () -> {
+                    System.out.println(val);
+                };
+                job.description = "Write";
+                ProcessAPI.fileSystemHandler.submitJob(job);
                 break;
+                
             case READ:
                 System.out.println("Read");
+                job.run = () -> {
+                    
+                };
+                job.description = "Read";
+                ProcessAPI.fileSystemHandler.submitJob(job);
                 break;
+                
             case TIMER:
-                Kernel.cpu.t.set(Defs.TIME_FRAME);
+                // don't actually block, just do context switch
+                proc.state = State.READY;
+                Kernel.cpu.t.set(Defs.TIME_FRAME); // reset timer
                 System.out.println("Timer interrupt");
-                //TODO: schedule
+                MainProcess.contextSwitch();
                 break;
             default:
                 System.out.println("Uknown interrupt");

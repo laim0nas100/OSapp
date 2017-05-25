@@ -28,7 +28,7 @@ public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
 
 	/** Simulate the fetch-decode execute cycle */
 	public void step() throws KernelExe {
-            int opcode = codeAccess(ip.val);
+            int opcode = codeAccess(ip.get());
             int a,b,addr;
             if (trace){
 //                System.err.println("Operation "+opcode);
@@ -66,15 +66,15 @@ public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
                     userMemorySet(sp.incBefore(1),(a == b) ? TRUE : FALSE);
                     break;
                 case Bytecode.BR :
-                    ip.val = codeAccess(ip.inc());
+                    ip.set(codeAccess(ip.inc()));
                     break;
                 case Bytecode.BRT :
                     addr = codeAccess(ip.inc());
-                    if ( userMemoryAccess(sp.dec())==TRUE ) ip.val = addr;
+                    if ( userMemoryAccess(sp.dec())==TRUE ) ip.set(addr);
                     break;
                 case Bytecode.BRF :
                     addr = codeAccess(ip.inc());
-                    if ( userMemoryAccess(sp.dec())==FALSE ) ip.val = addr;
+                    if ( userMemoryAccess(sp.dec())==FALSE ) ip.set(addr);
                     break;
                 case Bytecode.ICONST:
                     userMemorySet(sp.incBefore(1),codeAccess(ip.inc())); // push operand
@@ -96,7 +96,7 @@ public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
                     break;
                 default:
                     if(trace)
-                        System.out.println("invalid opcode: "+opcode+" at ip="+(ip.val-1));
+                        System.out.println("invalid opcode: "+opcode+" at ip="+(ip.get()-1));
                     throw new KernelExe("Invalid opcode");
                     
             }
@@ -111,7 +111,7 @@ public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
 	protected String stackString() {
             StringBuilder buf = new StringBuilder();
             buf.append("stack=[");
-            for (int i =0; i <= sp.val; i++) {
+            for (int i =0; i <= sp.get(); i++) {
                 Integer o = userMemoryAccess(i);
                 buf.append(" ");
                 buf.append(o);
@@ -122,14 +122,14 @@ public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
 
 
 	protected String disInstr() {
-		int opcode = codeAccess(ip.val);
+		int opcode = codeAccess(ip.get());
 		String opName = Bytecode.instructions[opcode].name;
 		StringBuilder buf = new StringBuilder();
-		buf.append(String.format("%04d:\t %-11s", ip.val, opName));
+		buf.append(String.format("%04d:\t %-11s", ip.get(), opName));
 		int nargs = Bytecode.instructions[opcode].n;
                 if ( nargs > 0 ) {
                     List<String> operands = new ArrayList<String>();
-                    for (int i = ip.val + 1; i <= ip.val + nargs; i++) {
+                    for (int i = ip.get() + 1; i <= ip.get() + nargs; i++) {
                         operands.add(String.valueOf(codeAccess(i)));
                     }
                     for (int i = 0; i < operands.size(); i++) {

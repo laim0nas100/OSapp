@@ -5,10 +5,13 @@
  */
 package kernel.process.sysprocess;
 
-/**
- *
- * @author lemmin
- */
-public class ProcessHandler implements Handler{
+
+public class ProcessHandler extends SysProc {
+    public ProcessHandler(int pid, int jobDuration) {
+        super(pid);
+        this.singleJobDuration = jobDuration;
+    }
+    
+    
     
 }

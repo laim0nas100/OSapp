@@ -11,7 +11,7 @@ public class StandaloneVM extends AbstractVM{
     public Integer[] stack;		// Operand stack, grows upwards
 
     public Reg tp = new Reg(0);
-    public Reg codeEnd = new Reg(0);
+    public int codeEnd = 0;
     public Reg p;
 
 
@@ -35,9 +35,9 @@ public class StandaloneVM extends AbstractVM{
         }
         System.err.println(in);
         System.err.println(n);
-        codeEnd.val = code.length;
+        codeEnd = code.length;
         
-        System.err.println(sp.val +" "+codeEnd.val +" "+ ip.val);
+        System.err.println(sp.get() +" "+codeEnd +" "+ ip.get());
 
     }
 
@@ -47,15 +47,15 @@ public class StandaloneVM extends AbstractVM{
     public void userMemorySet(int va, int val){
 //        System.err.println("UMS "+va);
 //        System.err.println(this.codeEnd.val+ " "+ va);
-        this.stack[va + this.codeEnd.val] = val;
+        this.stack[va + this.codeEnd] = val;
     }
     @Override
     public int userMemoryAccess(int va){
         try{
-            return this.stack[va + this.codeEnd.val];
+            return this.stack[va + this.codeEnd];
         }catch (Exception e){
             System.err.println("UMA "+va);
-            System.err.println(this.codeEnd.val+ " "+ va);
+            System.err.println(this.codeEnd+ " "+ va);
             return -1;
         }
     }
@@ -66,7 +66,7 @@ public class StandaloneVM extends AbstractVM{
 
     @Override
     public int codeSpaceSize() {
-        return this.codeEnd.val;
+        return this.codeEnd;
     }
 
     @Override
