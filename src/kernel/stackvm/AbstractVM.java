@@ -95,8 +95,8 @@ public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
                     sp.dec();
                     break;
                 default:
-                    if(trace)
-                        System.out.println("invalid opcode: "+opcode+" at ip="+(ip.get()-1));
+//                    if(trace)
+                    System.out.println("invalid opcode: "+opcode+" at ip="+(ip.get()-1));
                     throw new KernelExe("Invalid opcode");
                     
             }

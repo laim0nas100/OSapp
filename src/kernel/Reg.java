@@ -16,7 +16,7 @@ public class Reg extends SimpleIntegerProperty {
 
 
     public int incBefore(int i){
-        this.add(i);
+        this.set(get() + 1);
         return get();
     }
     public int decBefore(int i){
@@ -25,7 +25,7 @@ public class Reg extends SimpleIntegerProperty {
     }
     public int inc(int i){
         int save = get();
-        this.add(i);
+        this.set(save + i);
         return save;
     }
     public int dec(int i){

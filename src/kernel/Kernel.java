@@ -47,7 +47,6 @@ public class Kernel {
         
         for(int i = 0; i < USER_PROC_LIMIT; i++){
             UserProc p = new UserProc(i);
-            ProcessAPI.userProc[i] = p;
             ProcessAPI.allProc[i] = p;
         }
         

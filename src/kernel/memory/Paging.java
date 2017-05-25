@@ -123,12 +123,22 @@ public class Paging {
     
     // asumes page is available
     public static void allocatePage(int pid){
-        UserProc proc = ProcessAPI.userProc[pid];
+        UserProc proc = (UserProc) ProcessAPI.allProc[pid];
         MemFrame table = Kernel.ram[proc.plr.get()];
         int tableSize = countUsedPagesFromPageTable(table);
         int freeFrameIndex = firstFreeFrameIndex();
         table.mem[tableSize] = freeFrameIndex;
         markUsedFrameIndex(freeFrameIndex);
     }
+    
+    public static void memoryCopy(int frameIndexSrc, int frameIndexDest){
+        MemFrame src = Kernel.ram[frameIndexSrc];
+        MemFrame dest = Kernel.ram[frameIndexDest];
+        for(int i = 0; i < PAGE_SIZE; i++){
+            dest.mem[i] = src.mem[i];
+        }
+    }
+    
+    
 
 }

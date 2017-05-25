@@ -21,18 +21,10 @@ import misc.MiniCompiler;
  *
  * @author lemmin
  * 
- * update user processes, which got some resources (i.e. start new process or resume blocked)
- * iterate through all user processes via timer interrupt or sys call
- * gather some input(i.e. interrupts) data
- * execute all system processes
- * gather system resources
- * distribute gathered resources
- * repeat
  * 
  */
 public class ProcessAPI {
 
-    public static UserProc[] userProc = new UserProc[USER_PROC_LIMIT];
     public static Proc[] allProc = new Proc[USER_PROC_LIMIT + SYSTEM_PROC_LIMIT];
     public static SysProc idleProcess;
     public static SysProc fileSystemHandler;
@@ -43,9 +35,9 @@ public class ProcessAPI {
 
   
     
-    public static int firstFreePID(){
+    public static int firstFreeUserPID(){
         for(int i = 0; i < USER_PROC_LIMIT; i++){
-            if(userProc[i].state == State.UNUSED){
+            if(allProc[i].state == State.UNUSED){
                 return i;
             }
         }
@@ -63,7 +55,7 @@ public class ProcessAPI {
     }
     
     /**
-     * assume all resources is available
+     * assume all resources are available
      */
     public static UserProc createProcess(Integer[] code){
         
@@ -81,7 +73,7 @@ public class ProcessAPI {
             Paging.markUsedFrameIndex(freePageIndex);
         }
 
-        UserProc proc = userProc[firstFreePID()];
+        UserProc proc = (UserProc) allProc[firstFreeUserPID()];
         proc.initialize(code,plr);
         return proc;
     }
@@ -89,7 +81,7 @@ public class ProcessAPI {
     
     
     public static void cleanupProcess(int pid){
-        UserProc proc = userProc[pid];
+        UserProc proc = (UserProc) allProc[pid];
         int plr = proc.plr.get();
         MemFrame page = Kernel.ram[plr];
         Paging.markFreeFromPageTable(page);
@@ -136,22 +128,57 @@ public class ProcessAPI {
             enqueuedProc++;
             Job job = new Job(PID_IDLE);
             job.run = () ->{
+                enqueuedProc--;
                 int requiredFrames = ProcessAPI.requiredFrames(code) + 1; // code size + paging table
                 int freeFrames = Paging.countFreeFrames();
                 if(freeFrames < requiredFrames){
                     enqueueProcess(code); // try again later
-
                 }else{
                     ProcessAPI.createProcess(code);
                 }
-                enqueuedProc--;
-
             };
             job.description = "Create process";
             ProcessAPI.processHandler.submitJob(job);
         }
-        
-        
-        
+    }
+    
+    public static void forkProcess(int pid){
+        Job job = new Job(pid);
+        job.description = "Fork process";
+        job.run = () -> {
+
+            UserProc proc = (UserProc) allProc[pid];
+            
+            int id = ProcessAPI.firstFreeUserPID();
+            UserProc newproc = (UserProc) allProc[id];
+            if(id >= 0){
+                int pagesInUse = proc.pagesInUse();
+                int needPages = pagesInUse + 1 ; // account for paging table
+                int freeFrames = Paging.countFreeFrames();
+                if(freeFrames <= needPages){
+                    int newPlr = Paging.firstFreeFrameIndex();
+                    Paging.markUsedFrameIndex(newPlr);
+                    for(int i = 0; i < pagesInUse; i++){
+                        Paging.allocatePage(id);
+                    }
+                    MemFrame newTable = Kernel.ram[newPlr];
+                    MemFrame origTable = Kernel.ram[proc.plr.get()];
+                    for(int i = 0; i < pagesInUse; i++){
+                        Paging.memoryCopy(origTable.mem[i], newTable.mem[i]);
+                    }
+
+                    newproc.plr.set(newPlr);
+                    newproc.vm.ip.set(proc.vm.ip.get());
+                    newproc.vm.sp.set(proc.vm.sp.get());
+                    newproc.codeSpaceSize = proc.codeSpaceSize;
+                    newproc.state = State.READY;
+                }    
+
+            }else{
+                // oh well
+            }
+        };
+        ProcessAPI.processHandler.submitJob(job);
+
     }
 }

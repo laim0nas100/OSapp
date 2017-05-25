@@ -1,6 +1,5 @@
-package kernel.process.sysprocess;
+package kernel;
 
-import kernel.Kernel;
 import static kernel.Defs.*;
 import kernel.process.Proc;
 import kernel.process.ProcessAPI;
@@ -60,8 +59,8 @@ public class MainProcess {
         
         
         //somehow load processes
-        ProcessAPI.addLoadProcessJob("forceoom1");
-        ProcessAPI.addLoadProcessJob("loop");
+//        ProcessAPI.addLoadProcessJob("forceoom1");
+        ProcessAPI.addLoadProcessJob("print");
         try{
             start();
         }catch(Exception e){

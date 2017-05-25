@@ -9,14 +9,13 @@ import static kernel.Defs.*;
 import kernel.process.ProcessAPI;
 import kernel.memory.Paging;
 import kernel.process.Proc;
-import kernel.process.sysprocess.MainProcess;
 import kernel.resource.Job;
 
 /**
  *
  * @author lemmin
  * Programmable interrupt controller
- * Distributes "jobs" (neat way to package message) to specific handlers
+ * Distributes "jobs" (neat way to package message) to specific  handlers (System processes)
  */
 public class PIC {
     
@@ -32,6 +31,7 @@ public class PIC {
     public static final int HALT            = SYSCALL + 32;
     public static final int WRITE           = SYSCALL + 1;
     public static final int READ            = SYSCALL + 2;
+    public static final int FORK            = SYSCALL + 3;
     
     
     public static CPU cpu = Kernel.cpu;
@@ -65,15 +65,14 @@ public class PIC {
                 
                 
                 break;
-            case HALT:
-                
+            case HALT:  
                 job.run = () -> {
                     proc.state = State.ZOMBIE;
                     Job subJob = new Job(PID_IDLE);
                     subJob.run = () -> {
                         ProcessAPI.cleanupProcess(pid);
                     };
-                    subJob.description = "Process cleanup";
+                    subJob.description = "Actuall process cleanup";
                     ProcessAPI.memoryHandler.submitJob(subJob);
                 };
                 job.description = "Process cleanup invoke";
@@ -84,9 +83,8 @@ public class PIC {
                 int sp = Kernel.cpu.sp.dec();
                 int pa = Paging.va2pa(sp, cpu.plr.get());
                 int val = Paging.readMemory(pa);
-//                System.out.println("Write");
                 job.run = () -> {
-                    System.out.println(val);
+                    System.out.println("STD OUT:"+val);
                 };
                 job.description = "Write";
                 ProcessAPI.fileSystemHandler.submitJob(job);
@@ -101,6 +99,9 @@ public class PIC {
                 ProcessAPI.fileSystemHandler.submitJob(job);
                 break;
                 
+            case FORK:
+                ProcessAPI.forkProcess(pid);
+                break;
             case TIMER:
                 // don't actually block, just do context switch
                 proc.state = State.READY;
