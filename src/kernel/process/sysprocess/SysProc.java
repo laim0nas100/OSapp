@@ -10,6 +10,7 @@ import kernel.Defs.*;
 import kernel.process.Proc;
 import kernel.process.ProcessAPI;
 import kernel.resource.Job;
+import kernel.Kernel;
 
 /**
  *
@@ -25,16 +26,20 @@ public abstract class SysProc extends Proc implements Handler{
 
     @Override
     public int stepLogic() {
+        Kernel.cpu.it.set(0);//disable interrupts
+
         int timeTaken = 1;
         if(pendingJobs.isEmpty()){ //no jobs, block
             this.state = State.BLOCKED;
 //            MainProcess.contextSwitch();
-            return 1;//takes 1 tick
+            timeTaken = 1;//takes 1 tick
             
         }else{
             commitNextJob();
-            return this.singleJobDuration;
+            timeTaken = this.singleJobDuration;
         }
+        Kernel.cpu.it.set(1);//enable interupts
+        return timeTaken;
     }
     
 
@@ -48,12 +53,21 @@ public abstract class SysProc extends Proc implements Handler{
     @Override
     public void commitNextJob() {
         Job job = pendingJobs.pollFirst();
+        System.out.println("Commit "+pid +": "+job.description);
         if(job != null){//should never be null
             job.run.run();
             job.isDone = true;
+            
             ProcessAPI.setReady(job.invokedByPID);
+            
+            if(job.specialCase!=null){
+                job.specialCase.run();
+            }
         }
-        System.out.println("Commit "+pid +": "+job.description);
+        
+        if(pendingJobs.isEmpty()){
+            this.state = State.BLOCKED;
+        }
     }
     
     // system processes has no addressable memory so, no register switch is required

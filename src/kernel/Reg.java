@@ -11,10 +11,24 @@ import javafx.beans.property.SimpleIntegerProperty;
  *
  * @author lemmin
  */
-public class Reg extends SimpleIntegerProperty {
- 
-
-
+public class Reg {
+    private Reg update;
+    public int val;
+    public void bind(Reg other){
+        update = other;
+    }
+    public void unbind(){
+        update = null;
+    }
+    public int get(){
+        return val;
+    }
+    public void set(int v){
+        this.val = v;
+        if(update!=null){
+            update.set(v);
+        }    
+    }
     public int incBefore(int i){
         this.set(get() + 1);
         return get();
@@ -40,7 +54,7 @@ public class Reg extends SimpleIntegerProperty {
         return inc(1);
     }
     public Reg(int v){
-        super(v);
+        this.val = v;
     }
     public Reg(){
         this(0);

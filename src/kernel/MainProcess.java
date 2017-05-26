@@ -1,5 +1,8 @@
 package kernel;
 
+import GUI.WithGui;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import static kernel.Defs.*;
 import kernel.process.Proc;
 import kernel.process.ProcessAPI;
@@ -8,7 +11,7 @@ import kernel.process.ProcessAPI;
  * @author lemmin
  */
 public class MainProcess {
-    public static int delay = 500;
+    public static SimpleDoubleProperty delay = new SimpleDoubleProperty(500);
     public static int currentPID = PID_IDLE;
     public static boolean keepRunning = true;
     public static Proc current;
@@ -16,7 +19,16 @@ public class MainProcess {
         findNextReady();
         while(keepRunning){
             while(current.state == State.ACTIVE){
-                Thread.sleep(delay);
+                while((int)delay.get() >= 3000){
+                    Thread.sleep(500);
+                    System.out.print(".");
+                }
+                Thread.sleep((int)delay.get());
+                
+                
+                if(WithGui.scene != null){
+                    WithGui.scene.update();
+                }
                 current.step();
             }
             contextSwitch();
@@ -42,7 +54,7 @@ public class MainProcess {
             }
             
         }
-        System.out.println("Found next "+currentPID);
+//        System.out.println("Found next "+currentPID);
         current.state = State.ACTIVE;
     }
     

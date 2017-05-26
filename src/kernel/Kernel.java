@@ -20,7 +20,7 @@ import kernel.process.sysprocess.ProcessHandler;
  * @author Lemmin
  */
 public class Kernel {
-    public static MemFrame[] ram = new MemFrame[USER_FRAMES];
+    public static MemFrame[] ram = new MemFrame[FRAME_LIMIT];
     public static CPU cpu = new CPU();
     
     

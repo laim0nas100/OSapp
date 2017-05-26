@@ -3,14 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package kernel.process.sysprocess;
+package kernel.resource;
 
 
-public class FileSystemHandler extends SysProc {
-    
-    public FileSystemHandler(int pid, int jobDuration) {
+public class JobCleanup extends Job {
+
+    public JobCleanup(int pid) {
         super(pid);
-        this.singleJobDuration = jobDuration;
     }
     
 }

@@ -9,7 +9,9 @@ import static kernel.Defs.*;
 import kernel.process.ProcessAPI;
 import kernel.memory.Paging;
 import kernel.process.Proc;
+import kernel.process.UserProc;
 import kernel.resource.Job;
+import kernel.resource.JobCleanup;
 
 /**
  *
@@ -23,7 +25,7 @@ public class PIC {
     public static final int USER_ERROR      = 15;//all results in process termination
     public static final int INVALID_ADRESS  = USER_ERROR - 1;
     public static final int INVALID_OPCODE  = USER_ERROR - 2;
-    
+    public static final int UNKNOWN_ERROR   = USER_ERROR - 3;
     
     public static final int TIMER           = 16;
     public static final int PAGE_FAULT      = 17;
@@ -37,7 +39,6 @@ public class PIC {
     public static CPU cpu = Kernel.cpu;
     
     public static void trap(int pid, int interrupt){
-        
         //Block current process
         Proc proc = ProcessAPI.allProc[pid];
         proc.state = State.BLOCKED;
@@ -51,13 +52,22 @@ public class PIC {
         switch(interrupt){
             case PAGE_FAULT:
                 job.run = () -> {
-                    System.out.println("Allocate more memory!");
+                    System.out.println("Please more memory?");
                     if(Paging.countFreeFrames() > 0){
                         Paging.allocatePage(pid);
                         System.out.println("Here you go!");
                     }else{
                         System.out.println("We are out of memory");
-                        trap(pid,PAGE_FAULT);//try again
+                        job.specialCase = () -> {
+                            ProcessAPI.memoryHandler.failedMemoryAllocations++;
+                            if(ProcessAPI.memoryHandler.failedMemoryAllocations > ACTION_REPEAT_LIMIT){
+                                ProcessAPI.memoryHandler.failedMemoryAllocations = 0;
+                                System.out.println("Sorry, memory did not become available, die");
+                                trap(pid,HALT);
+                            }else{
+                                trap(pid,PAGE_FAULT);
+                            }
+                        };  
                     }
                 };
                 job.description = "Memory allocation";
@@ -65,32 +75,36 @@ public class PIC {
                 
                 
                 break;
-            case HALT:  
-                job.run = () -> {
-                    proc.state = State.ZOMBIE;
-                    Job subJob = new Job(PID_IDLE);
-                    subJob.run = () -> {
-                        ProcessAPI.cleanupProcess(pid);
-                    };
-                    subJob.description = "Actuall process cleanup";
-                    ProcessAPI.memoryHandler.submitJob(subJob);
+            case HALT:
+                Job otherjob = new JobCleanup(pid);
+                proc.state = State.ZOMBIE;
+                otherjob.run = () -> {
+                    ProcessAPI.cleanupProcess(pid);
                 };
-                job.description = "Process cleanup invoke";
-                ProcessAPI.processHandler.submitJob(job);               
+                otherjob.specialCase = () ->{
+                    proc.state = State.UNUSED;
+                };
+                otherjob.description = "Process cleanup " +pid;
+                ProcessAPI.memoryHandler.submitJob(otherjob);               
                 break;
                 
             case WRITE:
-                int sp = Kernel.cpu.sp.dec();
-                int pa = Paging.va2pa(sp, cpu.plr.get());
-                int val = Paging.readMemory(pa);
+                
                 job.run = () -> {
-                    System.out.println("STD OUT:"+val);
+                    UserProc up = (UserProc) ProcessAPI.allProc[pid];
+                    int sp = up.vm.sp.dec() + up.codeSpaceSize ;
+                    int pa = Paging.va2pa(sp, up.plr);
+//                    System.out.println("PA: "+pa);
+                    int val = Paging.readMemory(pa);
+                    System.out.println(pid+" STD OUT:"+val);
                 };
                 job.description = "Write";
                 ProcessAPI.fileSystemHandler.submitJob(job);
                 break;
                 
             case READ:
+                
+                //NOT IMPLEMENTED YET
                 System.out.println("Read");
                 job.run = () -> {
                     
@@ -100,7 +114,8 @@ public class PIC {
                 break;
                 
             case FORK:
-                ProcessAPI.forkProcess(pid);
+                //BETA
+//                ProcessAPI.forkProcess(pid);
                 break;
             case TIMER:
                 // don't actually block, just do context switch

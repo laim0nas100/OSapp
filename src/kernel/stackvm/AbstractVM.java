@@ -66,7 +66,7 @@ public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
                     userMemorySet(sp.incBefore(1),(a == b) ? TRUE : FALSE);
                     break;
                 case Bytecode.BR :
-                    ip.set(codeAccess(ip.inc()));
+                    ip.set(codeAccess(ip.get()));
                     break;
                 case Bytecode.BRT :
                     addr = codeAccess(ip.inc());
@@ -101,6 +101,7 @@ public abstract class AbstractVM implements PagedMemoryAccess, Interruptable{
                     
             }
             if ( trace ){
+                
                 System.err.printf("%-22s \n", stackString());
 //                System.err.printf("I %-35s\n", disInstr());
 //                System.err.println(stackString());

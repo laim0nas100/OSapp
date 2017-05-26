@@ -1,11 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GUI.MainController">
-    
-</AnchorPane>
+
+<HBox xmlns="http://javafx.com/javafx/8.0.131" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GUI.MainController">
+   <children>
+      <VBox HBox.hgrow="ALWAYS">
+         <children>
+            <TextArea fx:id="memoryText" VBox.vgrow="ALWAYS" />
+            <Slider fx:id="delaySlider" max="3001.0" min="1.0" value="500.0" />
+            <HBox>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+               <children>
+                  <Label text="Memory    Delay:" />
+                  <Label fx:id="delayLabel" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <VBox layoutX="10.0" layoutY="10.0" prefHeight="233.0" prefWidth="215.0" HBox.hgrow="NEVER">
+         <children>
+            <TextArea fx:id="procText" VBox.vgrow="ALWAYS" />
+            <Label text="Processes">
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </Label>
+         </children>
+      </VBox>
+      <VBox layoutX="210.0" layoutY="10.0" prefHeight="233.0" prefWidth="168.0" HBox.hgrow="NEVER">
+         <children>
+            <TextArea fx:id="cpuText" prefHeight="181.0" prefWidth="243.0" VBox.vgrow="ALWAYS" />
+            <HBox alignment="CENTER_LEFT">
+               <children>
+                  <Label text="CPU">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Label>
+                  <Label text="Enqueue new process">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </Label>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER">
+               <children>
+                  <TextField fx:id="procField" alignment="CENTER" onAction="#newProc">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </TextField>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
+</HBox>

@@ -124,7 +124,7 @@ public class Paging {
     // asumes page is available
     public static void allocatePage(int pid){
         UserProc proc = (UserProc) ProcessAPI.allProc[pid];
-        MemFrame table = Kernel.ram[proc.plr.get()];
+        MemFrame table = Kernel.ram[proc.plr];
         int tableSize = countUsedPagesFromPageTable(table);
         int freeFrameIndex = firstFreeFrameIndex();
         table.mem[tableSize] = freeFrameIndex;

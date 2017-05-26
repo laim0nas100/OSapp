@@ -14,12 +14,14 @@ public class Defs {
     public static boolean traceMemoryMapping = false;
     
     public enum State{UNUSED,READY,ACTIVE,BLOCKED,ZOMBIE};
-    public static final int USER_FRAMES = 15;
-    public static final int PAGE_SIZE = 64;
+    public static final int FRAME_LIMIT = 16;
+    public static final int PAGE_SIZE = 32;
     
     public static final int TIME_FRAME = 8;
     
-    public static final int USER_PROC_LIMIT = 10;
+    public static final int ACTION_REPEAT_LIMIT = 6;
+    
+    public static final int USER_PROC_LIMIT = 6;
     public static final int SYSTEM_PROC_LIMIT = 4;
     public static final int ALL_PROC_LIMIT = USER_PROC_LIMIT + SYSTEM_PROC_LIMIT;
     

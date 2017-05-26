@@ -16,6 +16,7 @@ public class Job{
     public int invokedByPID = PID_IDLE; //idle process
     public String description = "no desc"; 
     public Runnable run;
+    public Runnable specialCase;
     public Job(int pid){
         this.invokedByPID = pid;
     }

@@ -5,7 +5,6 @@
  */
 package kernel.process;
 
-import java.util.ArrayList;
 import kernel.Defs.State;
 import kernel.Kernel;
 import kernel.PIC;
@@ -17,13 +16,12 @@ import kernel.PIC;
 public abstract class Proc {
     public int pid;
     public State state = State.UNUSED;
-    public ArrayList<Integer> usedFD = new ArrayList<>();
     public abstract int stepLogic();
     public Proc(int pid){
         this.pid = pid;
     }
     
-    //should only do this if State is running
+    //should only do this if State is ACTIVE
     public final void step(){
         int timeTaken = stepLogic();
 //        System.out.println("Time taken "+timeTaken);
