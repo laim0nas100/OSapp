@@ -1,0 +1,19 @@
+2
+iconst 5
+gstore 0
+iconst 0
+gstore 1
+label loopStart
+gload 1
+gload 0
+ilt
+brf toHalt
+gload 1
+iconst 1
+iadd
+gstore 1
+gload 1
+int 33 #write
+br loopStart
+label toHalt
+int 64

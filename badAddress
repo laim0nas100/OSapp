@@ -1,0 +1,14 @@
+2
+iconst 70
+gstore 0
+iconst 0
+gstore 1
+label loopStart
+gload 1
+iconst 1 
+iadd
+gstore 1
+pop
+pop 
+pop
+br loopStart

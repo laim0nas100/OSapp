@@ -1,9 +1,12 @@
-2
-nop
-nop
-label ok
-nop
-int 2
-int 12
-int 33
-br ok
+5           # global variables
+iconst 1
+gstore 0    # a comment
+iconst 2
+gstore 1
+iconst 3
+gstore 2
+iconst 4
+gstore 3
+iconst 5
+gstore 4
+int 64
